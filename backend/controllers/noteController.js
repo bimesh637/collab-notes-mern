@@ -45,3 +45,19 @@ exports.deleteNote = async (req,res)=>{
 
     res.json({message:"Note deleted"})
 }
+
+
+exports.searchNotes = async (req,res)=>{
+
+    const { query } = req.query
+
+    const notes = await Note.find({
+        $text: { $search: query },
+        $or:[
+            {owner:req.user.id},
+            {collaborators:req.user.id}
+        ]
+    })
+
+    res.json(notes)
+}

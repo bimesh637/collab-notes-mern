@@ -10,5 +10,6 @@ router.get("/",auth,noteController.getNotes)
 router.put("/:id",auth,noteController.updateNote)
 
 router.delete("/:id",auth,noteController.deleteNote)
+router.get("/search",auth,noteController.searchNotes)
 
 module.exports = router
