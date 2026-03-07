@@ -16,16 +16,12 @@ export default function Login({ onLoginSuccess }) {
 
     try {
       setLoading(true);
-
       const res = await loginUser({ username, password });
 
       if (res.token) {
         localStorage.setItem("token", res.token);
         localStorage.setItem("user", JSON.stringify(res.user));
-
-        if (onLoginSuccess) {
-          onLoginSuccess();
-        }
+        if (onLoginSuccess) onLoginSuccess();
       } else {
         alert(res.message || "Login failed");
       }
@@ -37,41 +33,37 @@ export default function Login({ onLoginSuccess }) {
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-4">
-      <h2 className="text-2xl font-bold text-center text-gray-800">
-        Welcome Back
-      </h2>
-
+    <form onSubmit={handleLogin} className="space-y-5">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-200 mb-2">
           Username
         </label>
         <input
           type="text"
-          placeholder="Enter username"
+          placeholder="Enter your username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
+          className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 text-white placeholder:text-slate-300 outline-none focus:ring-2 focus:ring-cyan-400"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-slate-200 mb-2">
           Password
         </label>
         <input
           type="password"
-          placeholder="Enter password"
+          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
+          className="w-full px-4 py-3 rounded-2xl bg-white/10 border border-white/10 text-white placeholder:text-slate-300 outline-none focus:ring-2 focus:ring-cyan-400"
         />
       </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium transition"
+        className="w-full py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg hover:opacity-95 transition disabled:opacity-70"
       >
         {loading ? "Logging in..." : "Login"}
       </button>
