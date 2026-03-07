@@ -1,44 +1,61 @@
-import { useState } from "react"
+import { useState } from "react";
+import { loginUser } from "../services/api";
 
-function Login() {
+export default function Login() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-const [email,setEmail] = useState("")
-const [password,setPassword] = useState("")
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-return (
+    try {
+      const res = await loginUser({ username, password });
 
-<div className="min-h-screen flex items-center justify-center bg-gray-100">
+      if (res.token) {
+        localStorage.setItem("token", res.token);
 
-<div className="bg-white p-8 rounded shadow w-96">
+        // reload app so Dashboard appears
+        window.location.reload();
+      } else {
+        alert(res.message || "Login failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Login error");
+    }
+  };
 
-<h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+  return (
+    <form
+      onSubmit={handleLogin}
+      className="max-w-md mx-auto mt-20 p-6 bg-white shadow rounded"
+    >
+      <h1 className="text-2xl font-bold mb-4 text-center">
+        Login
+      </h1>
 
-<input
-type="email"
-placeholder="Email"
-className="w-full border p-2 mb-4 rounded"
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
-/>
+      <input
+        type="text"
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        className="w-full p-2 mb-3 border rounded"
+      />
 
-<input
-type="password"
-placeholder="Password"
-className="w-full border p-2 mb-4 rounded"
-value={password}
-onChange={(e)=>setPassword(e.target.value)}
-/>
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="w-full p-2 mb-4 border rounded"
+      />
 
-<button className="w-full bg-blue-500 text-white p-2 rounded">
-Login
-</button>
-
-</div>
-
-</div>
-
-)
-
+      <button
+        type="submit"
+        className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600"
+      >
+        Login
+      </button>
+    </form>
+  );
 }
-
-export default Login

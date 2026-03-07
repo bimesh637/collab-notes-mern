@@ -1,33 +1,16 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
-const noteSchema = new mongoose.Schema({
+const noteSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    content: { type: String },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    collaborators: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
+  },
+  { timestamps: true }
+);
 
-    title:{
-        type:String,
-        required:true
-    },
+// ADD THIS
+noteSchema.index({ title: "text", content: "text" });
 
-    content:{
-        type:String
-    },
-
-    owner:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"User"
-    },
-
-    collaborators:[
-        {
-            type:mongoose.Schema.Types.ObjectId,
-            ref:"User"
-        }
-    ]
-
-},{timestamps:true})
-
-noteSchema.index({
-    title:"text",
-    content:"text"
-})
-
-module.exports = mongoose.model("Note",noteSchema)
+module.exports = mongoose.model("Note", noteSchema);

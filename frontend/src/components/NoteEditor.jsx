@@ -1,6 +1,4 @@
 import { useState } from "react";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
 
 export default function NoteEditor({ onSave }) {
   const [title, setTitle] = useState("");
@@ -20,7 +18,6 @@ export default function NoteEditor({ onSave }) {
 
   return (
     <form onSubmit={handleSubmit} className="mb-6">
-
       <input
         type="text"
         placeholder="Note title"
@@ -29,10 +26,11 @@ export default function NoteEditor({ onSave }) {
         onChange={(e) => setTitle(e.target.value)}
       />
 
-      <ReactQuill
-        theme="snow"
+      <textarea
+        placeholder="Write your note..."
+        className="w-full border p-2 mb-3 rounded h-40"
         value={content}
-        onChange={setContent}
+        onChange={(e) => setContent(e.target.value)}
       />
 
       <button
@@ -41,7 +39,6 @@ export default function NoteEditor({ onSave }) {
       >
         Save Note
       </button>
-
     </form>
   );
 }

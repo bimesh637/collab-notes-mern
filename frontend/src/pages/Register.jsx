@@ -1,51 +1,73 @@
-import { useState } from "react"
+import { useState } from "react";
+import { registerUser } from "../services/api";
 
-function Register(){
+export default function Register({ onRegisterSuccess }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const [name,setName] = useState("")
-const [email,setEmail] = useState("")
-const [password,setPassword] = useState("")
+  const handleRegister = async (e) => {
+    e.preventDefault();
 
-return(
+    if (!username.trim() || !password.trim()) {
+      alert("Please enter username and password");
+      return;
+    }
 
-<div className="min-h-screen flex items-center justify-center bg-gray-100">
+    try {
+      setLoading(true);
 
-<div className="bg-white p-8 rounded shadow w-96">
+      const res = await registerUser({ username, password });
 
-<h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+      if (res.token) {
+        localStorage.setItem("token", res.token);
 
-<input
-placeholder="Name"
-className="w-full border p-2 mb-4 rounded"
-value={name}
-onChange={(e)=>setName(e.target.value)}
-/>
+        if (onRegisterSuccess) {
+          onRegisterSuccess();
+        }
+      } else {
+        alert(res.message || "Registration failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Registration error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-<input
-placeholder="Email"
-className="w-full border p-2 mb-4 rounded"
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
-/>
+  return (
+    <form
+      onSubmit={handleRegister}
+      className="max-w-md mx-auto p-6 bg-white shadow rounded"
+    >
+      <h1 className="text-2xl font-bold mb-4 text-center">
+        Register
+      </h1>
 
-<input
-type="password"
-placeholder="Password"
-className="w-full border p-2 mb-4 rounded"
-value={password}
-onChange={(e)=>setPassword(e.target.value)}
-/>
+      <input
+        type="text"
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        className="w-full p-2 mb-3 border rounded"
+      />
 
-<button className="w-full bg-green-500 text-white p-2 rounded">
-Register
-</button>
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="w-full p-2 mb-4 border rounded"
+      />
 
-</div>
-
-</div>
-
-)
-
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+      >
+        {loading ? "Registering..." : "Register"}
+      </button>
+    </form>
+  );
 }
-
-export default Register
