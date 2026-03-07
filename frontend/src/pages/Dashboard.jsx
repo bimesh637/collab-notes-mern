@@ -1,23 +1,31 @@
-function Dashboard(){
+import { useEffect, useState } from "react";
+import { getNotes } from "../services/api";
 
-return(
+export default function Dashboard() {
+  const [notes, setNotes] = useState([]);
 
-<div className="min-h-screen bg-gray-100 p-10">
+  useEffect(() => {
+    const token = localStorage.getItem("token");
 
-<h1 className="text-3xl font-bold mb-6">
-My Notes
-</h1>
+    getNotes(token).then((data) => {
+      setNotes(data);
+    });
+  }, []);
 
-<div className="bg-white p-6 rounded shadow">
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">
+        My Notes
+      </h1>
 
-<p>Your notes will appear here.</p>
-
-</div>
-
-</div>
-
-)
-
+      {notes.map((note) => (
+        <div
+          key={note._id}
+          className="p-4 border rounded mb-3"
+        >
+          {note.title}
+        </div>
+      ))}
+    </div>
+  );
 }
-
-export default Dashboard

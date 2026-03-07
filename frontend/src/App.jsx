@@ -11,11 +11,15 @@ function App() {
         Collab Notes
       </h1>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center mb-6">
         <Login />
       </div>
 
-      <div className="mt-6">
+      <div className="mb-6">
+        <Dashboard />
+      </div>
+
+      <div>
         <NoteEditor />
       </div>
 
