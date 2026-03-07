@@ -4,6 +4,7 @@ const Note = require("../models/Note");
 const User = require("../models/User");
 const authMiddleware = require("../middleware/authMiddleware");
 
+
 // Create note
 router.post("/", authMiddleware, async (req, res) => {
   try {
@@ -15,12 +16,17 @@ router.post("/", authMiddleware, async (req, res) => {
       owner: req.user.id,
     });
 
-    res.json(note);
+    const createdNote = await Note.findById(note._id)
+      .populate("owner", "username fullName userId email")
+      .populate("collaborators", "username fullName userId email");
+
+    res.json(createdNote);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to create note" });
   }
 });
+
 
 // Get all notes for logged-in user
 router.get("/", authMiddleware, async (req, res) => {
@@ -31,8 +37,8 @@ router.get("/", authMiddleware, async (req, res) => {
         { collaborators: req.user.id },
       ],
     })
-      .populate("owner", "username")
-      .populate("collaborators", "username")
+      .populate("owner", "username fullName userId email")
+      .populate("collaborators", "username fullName userId email")
       .sort({ createdAt: -1 });
 
     res.json(notes);
@@ -42,30 +48,27 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-// Search notes
+
+// Full-text search notes
 router.get("/search/:query", authMiddleware, async (req, res) => {
   try {
     const query = req.params.query;
 
-    const notes = await Note.find({
-      $and: [
-        {
-          $or: [
-            { title: { $regex: query, $options: "i" } },
-            { content: { $regex: query, $options: "i" } },
-          ],
-        },
-        {
-          $or: [
-            { owner: req.user.id },
-            { collaborators: req.user.id },
-          ],
-        },
-      ],
-    })
-      .populate("owner", "username")
-      .populate("collaborators", "username")
-      .sort({ createdAt: -1 });
+    const notes = await Note.find(
+      {
+        $text: { $search: query },
+        $or: [
+          { owner: req.user.id },
+          { collaborators: req.user.id },
+        ],
+      },
+      {
+        score: { $meta: "textScore" },
+      }
+    )
+      .populate("owner", "username fullName userId email")
+      .populate("collaborators", "username fullName userId email")
+      .sort({ score: { $meta: "textScore" } });
 
     res.json(notes);
   } catch (err) {
@@ -73,6 +76,7 @@ router.get("/search/:query", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Search failed" });
   }
 });
+
 
 // Update note
 router.put("/:id", authMiddleware, async (req, res) => {
@@ -88,8 +92,8 @@ router.put("/:id", authMiddleware, async (req, res) => {
       req.body,
       { new: true }
     )
-      .populate("owner", "username")
-      .populate("collaborators", "username");
+      .populate("owner", "username fullName userId email")
+      .populate("collaborators", "username fullName userId email");
 
     if (!note) {
       return res.status(404).json({ message: "Note not found" });
@@ -101,6 +105,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Failed to update note" });
   }
 });
+
 
 // Delete note
 router.delete("/:id", authMiddleware, async (req, res) => {
@@ -121,10 +126,15 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// Add collaborator
+
+// Add collaborator using username
 router.post("/:id/collaborators", authMiddleware, async (req, res) => {
   try {
-    const { collaboratorId } = req.body;
+    const { username } = req.body;
+
+    if (!username || !username.trim()) {
+      return res.status(400).json({ message: "Collaborator username is required" });
+    }
 
     const note = await Note.findById(req.params.id);
 
@@ -136,23 +146,30 @@ router.post("/:id/collaborators", authMiddleware, async (req, res) => {
       return res.status(403).json({ message: "Only owner can add collaborators" });
     }
 
-    if (String(note.owner) === String(collaboratorId)) {
-      return res.status(400).json({ message: "Owner is already part of the note" });
-    }
+    const user = await User.findOne({ username: username.trim() });
 
-    const user = await User.findById(collaboratorId);
     if (!user) {
       return res.status(404).json({ message: "Collaborator user not found" });
     }
 
-    if (!note.collaborators.includes(collaboratorId)) {
-      note.collaborators.push(collaboratorId);
-      await note.save();
+    if (String(note.owner) === String(user._id)) {
+      return res.status(400).json({ message: "Owner already included" });
     }
 
+    const alreadyAdded = note.collaborators.some(
+      (collab) => String(collab) === String(user._id)
+    );
+
+    if (alreadyAdded) {
+      return res.status(400).json({ message: "Collaborator already added" });
+    }
+
+    note.collaborators.push(user._id);
+    await note.save();
+
     const updatedNote = await Note.findById(note._id)
-      .populate("owner", "username")
-      .populate("collaborators", "username");
+      .populate("owner", "username fullName userId email")
+      .populate("collaborators", "username fullName userId email");
 
     res.json(updatedNote);
   } catch (err) {
@@ -160,6 +177,7 @@ router.post("/:id/collaborators", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Failed to add collaborator" });
   }
 });
+
 
 // Remove collaborator
 router.delete("/:id/collaborators/:collaboratorId", authMiddleware, async (req, res) => {
@@ -181,8 +199,8 @@ router.delete("/:id/collaborators/:collaboratorId", authMiddleware, async (req, 
     await note.save();
 
     const updatedNote = await Note.findById(note._id)
-      .populate("owner", "username")
-      .populate("collaborators", "username");
+      .populate("owner", "username fullName userId email")
+      .populate("collaborators", "username fullName userId email");
 
     res.json(updatedNote);
   } catch (err) {

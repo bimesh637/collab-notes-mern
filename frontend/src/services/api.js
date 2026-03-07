@@ -119,14 +119,14 @@ export async function deleteNote(noteId, token) {
   return result;
 }
 
-export async function addCollaborator(noteId, collaboratorId, token) {
+export async function addCollaborator(noteId, username, token) {
   const res = await fetch(`${API_URL}/notes/${noteId}/collaborators`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ collaboratorId }),
+    body: JSON.stringify({ username }),
   });
 
   const result = await res.json();

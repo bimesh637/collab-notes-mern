@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [error, setError] = useState("");
 
   const token = localStorage.getItem("token");
+  const currentUser = JSON.parse(localStorage.getItem("user") || "null");
 
   useEffect(() => {
     loadNotes();
@@ -45,6 +46,11 @@ export default function Dashboard() {
     } catch (err) {
       setError(err.message || "Search failed");
     }
+  };
+
+  const handleResetSearch = () => {
+    setSearch("");
+    loadNotes();
   };
 
   const handleSave = async (noteData) => {
@@ -79,15 +85,15 @@ export default function Dashboard() {
 
   const handleAddCollaborator = async (noteId) => {
     try {
-      const collaboratorId = collabInputs[noteId];
+      const username = collabInputs[noteId];
 
-      if (!collaboratorId?.trim()) {
-        alert("Please enter collaborator user ID");
+      if (!username?.trim()) {
+        alert("Please enter collaborator username");
         return;
       }
 
       setError("");
-      await addCollaborator(noteId, collaboratorId, token);
+      await addCollaborator(noteId, username, token);
 
       setCollabInputs((prev) => ({
         ...prev,
@@ -110,13 +116,9 @@ export default function Dashboard() {
     }
   };
 
-  const handleResetSearch = () => {
-    setSearch("");
-    loadNotes();
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     window.location.reload();
   };
 
@@ -127,7 +129,12 @@ export default function Dashboard() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-800">Collab Notes</h1>
-              <p className="text-gray-500 mt-1">Total Notes: {notes.length}</p>
+              <p className="text-gray-600 mt-2">
+                Welcome, {currentUser?.fullName || currentUser?.username || "User"}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Total Notes: {notes.length}
+              </p>
             </div>
 
             <button
@@ -190,7 +197,12 @@ export default function Dashboard() {
                       Owner: {note.owner?.username || "Unknown"}
                     </p>
                     <p className="text-sm text-gray-400 mt-1">
-                      {note.createdAt ? new Date(note.createdAt).toLocaleString() : ""}
+                      Collaborators: {note.collaborators?.length || 0}
+                    </p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      {note.createdAt
+                        ? new Date(note.createdAt).toLocaleString()
+                        : ""}
                     </p>
                   </div>
 
@@ -226,7 +238,9 @@ export default function Dashboard() {
                           </span>
 
                           <button
-                            onClick={() => handleRemoveCollaborator(note._id, collab._id)}
+                            onClick={() =>
+                              handleRemoveCollaborator(note._id, collab._id)
+                            }
                             className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
                           >
                             Remove
@@ -242,7 +256,7 @@ export default function Dashboard() {
 
                   <input
                     type="text"
-                    placeholder="Collaborator user ID"
+                    placeholder="Collaborator username"
                     value={collabInputs[note._id] || ""}
                     onChange={(e) =>
                       handleCollabInputChange(note._id, e.target.value)

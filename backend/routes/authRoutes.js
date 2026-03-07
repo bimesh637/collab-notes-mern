@@ -4,20 +4,34 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-// POST /api/auth/register
+// helper to generate USER001 style ID
+async function generateUserId() {
+  const count = await User.countDocuments();
+  const nextNumber = count + 1;
+  return `USER${String(nextNumber).padStart(3, "0")}`;
+}
+
+// Register
 router.post("/register", async (req, res) => {
-  const { username, password } = req.body;
+  const { fullName, age, email, username, password } = req.body;
 
   try {
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({
+      $or: [{ username }, { email }],
+    });
 
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "Username or email already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const userId = await generateUserId();
 
     const newUser = new User({
+      userId,
+      fullName,
+      age,
+      email,
       username,
       password: hashedPassword,
     });
@@ -32,7 +46,13 @@ router.post("/register", async (req, res) => {
 
     res.json({
       token,
-      username: newUser.username,
+      user: {
+        userId: newUser.userId,
+        fullName: newUser.fullName,
+        age: newUser.age,
+        email: newUser.email,
+        username: newUser.username,
+      },
     });
   } catch (err) {
     console.error(err);
@@ -40,7 +60,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// POST /api/auth/login
+// Login
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -65,7 +85,13 @@ router.post("/login", async (req, res) => {
 
     res.json({
       token,
-      username: user.username,
+      user: {
+        userId: user.userId,
+        fullName: user.fullName,
+        age: user.age,
+        email: user.email,
+        username: user.username,
+      },
     });
   } catch (err) {
     console.error(err);
