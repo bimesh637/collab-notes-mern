@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getNotes,
   createNote,
@@ -122,6 +122,120 @@ export default function Dashboard() {
     window.location.reload();
   };
 
+  const myNotes = useMemo(() => {
+    return notes.filter(
+      (note) =>
+        note.owner &&
+        currentUser &&
+        (
+          note.owner.username === currentUser.username ||
+          note.owner.userId === currentUser.userId
+        )
+    );
+  }, [notes, currentUser]);
+
+  const sharedNotes = useMemo(() => {
+    return notes.filter(
+      (note) =>
+        note.owner &&
+        currentUser &&
+        !(
+          note.owner.username === currentUser.username ||
+          note.owner.userId === currentUser.userId
+        )
+    );
+  }, [notes, currentUser]);
+
+  const renderNoteCard = (note, isOwner) => (
+    <div key={note._id} className="bg-white p-5 rounded-xl shadow">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-800">{note.title}</h2>
+          <p className="text-sm text-gray-400 mt-1">
+            Owner: {note.owner?.username || "Unknown"}
+          </p>
+          <p className="text-sm text-gray-400 mt-1">
+            Collaborators: {note.collaborators?.length || 0}
+          </p>
+          <p className="text-sm text-gray-400 mt-1">
+            {note.createdAt ? new Date(note.createdAt).toLocaleString() : ""}
+          </p>
+        </div>
+
+        {isOwner && (
+          <button
+            onClick={() => handleDelete(note._id)}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+          >
+            Delete
+          </button>
+        )}
+      </div>
+
+      <div
+        className="prose max-w-none border-t pt-3"
+        dangerouslySetInnerHTML={{
+          __html: note.content || "",
+        }}
+      />
+
+      <div className="mt-4 pt-4 border-t">
+        <h3 className="font-semibold text-gray-700 mb-2">Collaborators</h3>
+
+        {note.collaborators && note.collaborators.length > 0 ? (
+          <div className="space-y-2 mb-3">
+            {note.collaborators.map((collab) => (
+              <div
+                key={collab._id}
+                className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2"
+              >
+                <span className="text-sm text-gray-700">
+                  {collab.username}
+                </span>
+
+                {isOwner && (
+                  <button
+                    onClick={() =>
+                      handleRemoveCollaborator(note._id, collab._id)
+                    }
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400 mb-3">
+            No collaborators added yet
+          </p>
+        )}
+
+        {isOwner && (
+          <>
+            <input
+              type="text"
+              placeholder="Collaborator username"
+              value={collabInputs[note._id] || ""}
+              onChange={(e) =>
+                handleCollabInputChange(note._id, e.target.value)
+              }
+              className="border p-2 rounded w-full mb-2"
+            />
+
+            <button
+              onClick={() => handleAddCollaborator(note._id)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Add Collaborator
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-5xl mx-auto">
@@ -131,6 +245,10 @@ export default function Dashboard() {
               <h1 className="text-3xl font-bold text-gray-800">Collab Notes</h1>
               <p className="text-gray-600 mt-2">
                 Welcome, {currentUser?.fullName || currentUser?.username || "User"}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                {currentUser?.userId ? `User ID: ${currentUser.userId}` : ""}
+                {currentUser?.email ? ` | Email: ${currentUser.email}` : ""}
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 Total Notes: {notes.length}
@@ -180,100 +298,30 @@ export default function Dashboard() {
           <NoteEditor onSave={handleSave} />
         </div>
 
-        <div className="space-y-4">
-          {notes.length === 0 ? (
-            <div className="bg-white p-6 rounded-xl shadow text-center text-gray-500">
-              No notes found
-            </div>
-          ) : (
-            notes.map((note) => (
-              <div key={note._id} className="bg-white p-5 rounded-xl shadow">
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-800">
-                      {note.title}
-                    </h2>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Owner: {note.owner?.username || "Unknown"}
-                    </p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Collaborators: {note.collaborators?.length || 0}
-                    </p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      {note.createdAt
-                        ? new Date(note.createdAt).toLocaleString()
-                        : ""}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => handleDelete(note._id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                  >
-                    Delete
-                  </button>
-                </div>
-
-                <div
-                  className="prose max-w-none border-t pt-3"
-                  dangerouslySetInnerHTML={{
-                    __html: note.content || "",
-                  }}
-                />
-
-                <div className="mt-4 pt-4 border-t">
-                  <h3 className="font-semibold text-gray-700 mb-2">
-                    Collaborators
-                  </h3>
-
-                  {note.collaborators && note.collaborators.length > 0 ? (
-                    <div className="space-y-2 mb-3">
-                      {note.collaborators.map((collab) => (
-                        <div
-                          key={collab._id}
-                          className="flex items-center justify-between bg-gray-50 border rounded px-3 py-2"
-                        >
-                          <span className="text-sm text-gray-700">
-                            {collab.username}
-                          </span>
-
-                          <button
-                            onClick={() =>
-                              handleRemoveCollaborator(note._id, collab._id)
-                            }
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-400 mb-3">
-                      No collaborators added yet
-                    </p>
-                  )}
-
-                  <input
-                    type="text"
-                    placeholder="Collaborator username"
-                    value={collabInputs[note._id] || ""}
-                    onChange={(e) =>
-                      handleCollabInputChange(note._id, e.target.value)
-                    }
-                    className="border p-2 rounded w-full mb-2"
-                  />
-
-                  <button
-                    onClick={() => handleAddCollaborator(note._id)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                  >
-                    Add Collaborator
-                  </button>
-                </div>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">My Notes</h2>
+          <div className="space-y-4">
+            {myNotes.length === 0 ? (
+              <div className="bg-white p-6 rounded-xl shadow text-center text-gray-500">
+                No personal notes found
               </div>
-            ))
-          )}
+            ) : (
+              myNotes.map((note) => renderNoteCard(note, true))
+            )}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Shared With Me</h2>
+          <div className="space-y-4">
+            {sharedNotes.length === 0 ? (
+              <div className="bg-white p-6 rounded-xl shadow text-center text-gray-500">
+                No shared notes found
+              </div>
+            ) : (
+              sharedNotes.map((note) => renderNoteCard(note, false))
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -37,7 +37,9 @@ export default function Register({ onRegisterSuccess }) {
         localStorage.setItem("token", res.token);
         localStorage.setItem("user", JSON.stringify(res.user));
 
-        if (onRegisterSuccess) onRegisterSuccess();
+        if (onRegisterSuccess) {
+          onRegisterSuccess();
+        }
       } else {
         alert(res.message || "Registration failed");
       }
@@ -60,7 +62,7 @@ export default function Register({ onRegisterSuccess }) {
         placeholder="Full Name"
         value={formData.fullName}
         onChange={handleChange}
-        className="w-full px-4 py-3 border rounded-xl"
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
 
       <input
@@ -69,7 +71,7 @@ export default function Register({ onRegisterSuccess }) {
         placeholder="Age"
         value={formData.age}
         onChange={handleChange}
-        className="w-full px-4 py-3 border rounded-xl"
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
 
       <input
@@ -78,7 +80,7 @@ export default function Register({ onRegisterSuccess }) {
         placeholder="Email"
         value={formData.email}
         onChange={handleChange}
-        className="w-full px-4 py-3 border rounded-xl"
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
 
       <input
@@ -87,7 +89,7 @@ export default function Register({ onRegisterSuccess }) {
         placeholder="Username"
         value={formData.username}
         onChange={handleChange}
-        className="w-full px-4 py-3 border rounded-xl"
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
 
       <input
@@ -96,13 +98,13 @@ export default function Register({ onRegisterSuccess }) {
         placeholder="Password"
         value={formData.password}
         onChange={handleChange}
-        className="w-full px-4 py-3 border rounded-xl"
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition"
       >
         {loading ? "Registering..." : "Register"}
       </button>
